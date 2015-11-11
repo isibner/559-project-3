@@ -118,14 +118,26 @@ Using our enmity graph, we identify players that have targeted us and choose a p
 
 If a player stopped targeting us, as long as they are within our defined time window, we would still target them. If we had no player target us at all in the first place, we would simply take no action.
 
-\subsection{Protective Farmer}
-The Protective Farmer was a reaction to the results of the preliminary test run during the first several classes. XOrganism was not faring so well later on in games with other, more aggressive, players, even when it did well in the early stages of the game. As well, due to XOrganism's courteous moves, it would lose valuable coverage of the food-populated cells on the board.
+\subsection{EV Player}
+The general strategy of EV player was made up of two phases. The first phase involved creating a directed graph where each edge represents the probability of one player shooting another on the next turn. The second phase dealt with using these probabilities to accurately compute the expected value of points gained from shooting each player and not shooting at all. Ultimately, this player would shoot whichever option yielded the highest number of expected points. 
 
-The Protective Farmer was an experiment to see if these issues could be mitigated by a completely different strategy. The core idea behind the Farmer was that if there were four organisms on each adjacent cell to a cell with food, they could all `farm' this cell. Staying off of the cell would allow it to duplicate freely, while the adjacency pattern would prevent opposing players from reaching the food source.
+Graph Creation:
 
-The initial stage of the Protective Farmer, before farming a food source, is to find a source of food that could support this configuration. In games with more organisms, many of the cells were covered up quickly, or enemy organisms prevented the Farmer from reaching other cells. The solution for this problem in Protective Farmer was almost the exact opposite of the movement strategy in XOrganism. The Farmer would move onto a new, unexplored cell on every turn (unless it needed food). It's goal was to find a cell with greater than four units of food on it as the Farmer may have needed to eat and will have to reproduce three times all without eating up the remainder of the food.
+In order to predict probabilities of one player shooting another we clearly need to refer to the past shooting events. Whenever a player shoots another, it contributes to his probability of shooting that player in the future (assuming his target is still alive in the future). The more recent the shot has occurs, the more likely it is that the same shot will occur again on the next turn. 
 
-Once it found a satisfactory source food cell it transitioned into a building phase. The Farmer would look at all adjacent tiles and see if any were filled. If more than two were empty, then the farmer reproduces a wall onto one of those cells. This continues until there is only one cell left uncovered, which the Farmer simply moves to (instead of reproducing on to) to become the final wall. This Farmer organism and the newly spawned Farmer players are set to a Protective mode. This means that the organisms will stay still on their own cell unless they need food. If they do, they will attempt to move inwards. Once they replenish their energy, they move back onto the open cell they left earlier. In addition, when they move into the center cell, they also transition back to the building phase to fill any gaps in the wall that may have formed if any other Farmer organisms died off.
+
+EV Calculation:
+
+Now that we have approximations for the probability that any player shoots another player, we can apply these probabilities to come up with expected points to be gained or lost by making a certain decision. When shooting a player, there are three ways your expected point total can be affected: 
+
+1) Expected enemies killed can increase
+
+2) Expected friends that remain can increase
+
+3) Expectation for surviving till the end can decrease
+
+Note that these expectations are calculated relative to the option of not shooting, so if we see negative expectations for shooting all of the players, the player will simply not shoot.
+
 
 \subsection{David's Revenge's Revenge}
 
@@ -156,15 +168,43 @@ David's Revenge took a very simplistic approach in defining its actions. In its 
 
 To compute this, we cache all hits from the start of the game by leveraging our enmity graph. We iterate through the past $k$ rounds and count up how many times each player hit us throughout those $k$ rounds. We then select the player with the largest sum and choose to hit that person. Thus if no player targeted us in a round, however within the past few rounds there had been players that targeted us, we would look to target those players.
 
-\subsection{Protective Farmer}
-The implementation of Protective Farmer was divided up into several different phases. The Farmer uses external state to keep track of which phase of its lifecycle it's in, but this information is only used between players during the building phase.
+\subsection{EV Player}
+Graph Creation:
 
-The first phase was classified as the SEARCHING phase. Only the first organism would start out with this state. If the cell that the Farmer was on had no units of food, it would attempt to move in an unvisited direction with food. If there was no unvisited direction with food, then it would be an unvisited direction. If there was no remaining unvisited direction, then the Farmer would attempt to move in any open direction. These choices were calculated by filtering down the set of possible choices (from open directions to unvisited directions to unvisited directions with food) and then randomly picking a remaining option. The Farmer's visited steps were calculated by keeping track of its position relative to its point of birth. Once the Farmer takes a step, its previous position is added to a set of Points (later used in determining if the Farmer is attempting to visit a cell that has already been visited). One potential drawback to this strategy is that the Farmer won't be able to figure out the global coordinates of its position and therefore could be revisiting certain cells if it wraps around an edge during its life. As well, due to the random nature of direction selection, it is possible that the Farmer could trap itself inside its own path. In this case, the Farmer will look at only open directions as it will eventually have no other options. The Farmer will only stop if is hungry and needs food, or it find an adequate food source to start farming.
+A shooting history is maintained that keeps track of every player’s moves. The specific history for a player is an ordered list containing either the player id of player that was shot on that specific round or a -1 indicating that no one was shot. The player model’s the probability of one player shooting another by using the geometric series. The most recent shot receives a weighting of 1/2, the next most recent receives a weighting of 1/4, the one after that receives 1/8 and so on and so forth. After this process, the probabilities are added up for each unique player. Note that shot history includes a “blank” or the event in which no shot is taken. The act of not shooting is essentially treated as a separate player in this sense and is assigned a probability just like the other players are. One more subtlety to note is that once player’s get eliminated there is a probability of 0 that they will be shot. The way we reflect this result in our algorithm is by removing all dead players from every shot history list on every turn.   
 
-Once the Farmer finds a satisfactory (food units are greater than four) food source, it transitions into the CENTER phase. In this phase, the farmer looks at the adjacent tiles and looks to see if they are filled with other Farmers in the WALL phase. For this implementation, the WALL external state is an integer from three to six, so it is possible a malicious imposter could break this strategy. If more than two of these directions are empty, the Farmer reproduces in that direction, passing along this direction information to the new Farmer organism. There are four WALL states: WEST\_WALL(3), EAST\_WALL(4), NORTH\_WALL(5), and SOUTH\_WALL(6). If there is exactly one direction that is not protected by a wall, then the Farmer moves in that direction, becoming that wall.
 
-All of the walls have the same logic for their phase. If they reach a minimum energy threshold they will attempt to move back onto the food source (transitioning into the CENTER phase as well). Otherwise, they will remain motionless. The minimum threshold is the movement cost $v$ plus nine times the stay cost (1). The absolute minimum survivable energy level is one more than the movement cost, because even if the organism can move to get food, it will not survive the move. The only other action a Farmer in the wall phase can take is reproduce (with some probability, just like XOrganism) away from the food source if the cell it is originally spawned on has food.
 
+
+
+EV calculation: 
+
+As mentioned before, there are three different aspects that contribute to a player’s total expected points. EV player carries out the following calculations to produce expected values:
+\\
+\\
+\\
+Expected enemies killed: 
+
+For this value, we are not simply looking to determine the probability that some enemy player p will be shot at. We want to compare the probability that p will be shot at at least once next turn to the probability that p will be dead next turn (have two or more players shoot at it). Obviously, if both of these values are similar, there is no need to shoot. Our expected value is essentially the value gained by shooting. Thus, this can be computed using the following formula: 
+
+E(enemies killed) = P(p is shot at least once) - P(p is shot at least twice) 
+\\
+\\
+\\
+Expected friends saved:
+
+This value is slightly more complicated to calculate. Ultimately, our expected value should be the probability that the player p that we are targeting will shoot a friend of our’s multiplied by the probability that this friend will receive at least one other shot from someone else. If this friend has a very small chance of getting shot at by anywhere else besides the one player we are targeting, it makes no sense to defend our friend. From this value we will subtract the probability that this friend of ours will die next turn (if we don’t shoot at him). If our friend is extremely likely to die, there’s no sense in wasting a bullet trying to save him/her. We compute this value using the following formula:
+
+E(friends saved) = (P(f is shot at least twice | p is alive) - P(f is shot at least twice | p is dead) ) * P(p is shot at least once)
+\\
+\\
+\\
+
+Expectation of survival:
+
+Every time our player chooses to shoot, it loses value because it’s probability of dying (and losing a point as a result) increases. This value depends on the ratio of enemies to total players. In a game where there are mostly friends and very few enemies, a high percentage of the N initial players tend to make it to the end. In games where there are many enemies, it is unlikely that more than a couple of players will be remaining. As a result, EV player roughly models this probability as $0.7 * (e/N)$.
+
+Note that calculating some of the probabilities above using our probability graph is not trivial. P(p is shot at least once) can be obtained by subtracting the product of the probabilities that every player does not shoot p from 1. Similarly, P(p is shot at least twice) would involve subtracting the total probability that p is shot at exactly 0 or 1 times from 1. 
 \subsection{David's Revenge's Revenge}
 
 The implementation of David's Revenge's Revenge was straightforward, given the existing code for David's Revenge. We implemented the logistic curve in another class, which was parametrized by the values of $\mu$ and $\beta$. Once we had the final values of $\mu$ and $\beta$ then we simply hardcoded them in the David's Revenge's Revenge constructor, and added a check to the end comparing \texttt{Math.random()} to the value from the Logistic Curve to implement the probability calculation.
