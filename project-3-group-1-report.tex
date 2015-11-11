@@ -168,13 +168,23 @@ David's Revenge took a very simplistic approach in defining its actions. In its 
 
 To compute this, we cache all hits from the start of the game by leveraging our enmity graph. We iterate through the past $k$ rounds and count up how many times each player hit us throughout those $k$ rounds. We then select the player with the largest sum and choose to hit that person. Thus if no player targeted us in a round, however within the past few rounds there had been players that targeted us, we would look to target those players.
 
+
 \subsection{EV Player}
+
+
 Graph Creation:
+\\
+A shooting history is maintained that keeps track of every player’s moves. The specific history for a player is an ordered list containing either the player id of player that was shot on that specific round or a -1 indicating that no one was shot. The player model’s the probability of one player shooting another by using the geometric series. The most recent shot receives a weighting of 1/2, the next most recent receives a weighting of 1/4, the one after that receives 1/8 and so on and so forth. After this process, the probabilities are added up for each unique player. Note that shot history includes a “blank” or the event in which no shot is taken. The act of not shooting is essentially treated as a separate player in this sense and is assigned a probability just like the other players are. One more subtlety to note is that once player’s get eliminated there is a probability of 0 that they will be shot. The way we reflect this result in our algorithm is by removing all dead players from every shot history list on every turn.  Below we have included a sample sequence for one player's shooting history. 
+\\
+\\
 
-A shooting history is maintained that keeps track of every player’s moves. The specific history for a player is an ordered list containing either the player id of player that was shot on that specific round or a -1 indicating that no one was shot. The player model’s the probability of one player shooting another by using the geometric series. The most recent shot receives a weighting of 1/2, the next most recent receives a weighting of 1/4, the one after that receives 1/8 and so on and so forth. After this process, the probabilities are added up for each unique player. Note that shot history includes a “blank” or the event in which no shot is taken. The act of not shooting is essentially treated as a separate player in this sense and is assigned a probability just like the other players are. One more subtlety to note is that once player’s get eliminated there is a probability of 0 that they will be shot. The way we reflect this result in our algorithm is by removing all dead players from every shot history list on every turn.   
 
-
-
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.5\columnwidth]{geometric_final.png}
+\caption[Final logistic curve with $\beta=0.06,\mu=0.4$]{Sample 3 step sequence}
+\label{fig:gallery3}
+\end{figure}
 
 
 EV calculation: 
