@@ -178,61 +178,50 @@ Once the Farmer finds a satisfactory (food units are greater than four) food sou
 
 All of the walls have the same logic for their phase. If they reach a minimum energy threshold they will attempt to move back onto the food source (transitioning into the CENTER phase as well). Otherwise, they will remain motionless. The minimum threshold is the movement cost $v$ plus nine times the stay cost (1). The absolute minimum survivable energy level is one more than the movement cost, because even if the organism can move to get food, it will not survive the move. The only other action a Farmer in the wall phase can take is reproduce (with some probability, just like XOrganism) away from the food source if the cell it is originally spawned on has food.
 
-\subsection{SimplePlayer}
-The implementation of Simple Player was true to its name, simple. It relied on the basic input parameters to the game and simple strategic calculations. Most of the behavior was identical to the XORganism, with only a few changes and improvements (which are listed below).
+\subsection{David's Revenge's Revenge}
 
-\begin{itemize}
-  \item \textbf{Reproduction:} The more aggressive reproduction strategy was implemented from two angles.
-    \begin{itemize}
-      \item We increased the reproductive probability to 90\% after many trials of different values with other organisms in various configurations. Any higher, and the organism tended to overextend and die off; lower, and the organism would not spread fast enough to be competitive even on large boards.
-      \item Simultaneously, we decreased the energy required to reproduce to $Energy_{organism} \geq M - 1.5 u$ - i.e., we changed the definition of ``sated'' to require slightly less energy. This tended to make  the organism much less conservative about reproduction, while still ensuring offspring had sufficient energy. The value of 1.5 was also determined to be an effective value through many trialss.
-    \end{itemize}
-    Therefore, on a given turn in the energy is greater than the new energy threshold, there is a 90\% chance of reproduction.
-  \item \textbf{Movement:} The organisms performs the following checks for movement on a given turn.
-  \begin{enumerate}
-    \item If there is food on the square of the organism, then the organism stays put and eats.
-    \item   If there is food on at least one of the squares, then it will move to a random surrounding square containing food.
-    \item  If there is not food on any of the surrounding squares, then the organism, provided it has enough energy, will move to a random square. If the north square is available, then the organism will take it with probability 75\%.
-  \end{enumerate}
-\end{itemize}
+The implementation of David's Revenge's Revenge was straightforward, given the existing code for David's Revenge. We implemented the logistic curve in another class, which was parametrized by the values of $\mu$ and $\beta$. Once we had the final values of $\mu$ and $\beta$ then we simply hardcoded them in the David's Revenge's Revenge constructor, and added a check to the end comparing \texttt{Math.random()} to the value from the Logistic Curve to implement the probability calculation.
+
+The more interesting part of the implementation of DRR was \textit{determining} the best values of $\mu$ and $\beta$. To do this, we first modified the player to take in parameters from a file so that it would be easier to automate changing the variables. We also modified the tournament code so that it would only print out the average ranking (which was the metric we were using to measure performance). Then we wrote two JavaScript programs: the first collected all the results for all the parameter combinations, and the second parsed the text results to determine the best-performing combination.
 
 \section{Results}
-This project has many more configuration variables compared to the previous project (eight rather than two). However, the players were not generally aware of most of these changing parameters. As such, players were designed to function reasonably well in all cases, especially those where hidden parameters were set to extremes. The results from the several tournament runs are essentially a sampling of different viable configurations for this game. As well, there are two completely different tournament scenarios to consider. For these results, only the scenarios where the players were by themselves or in a group of the best six will be considered.
+Our results were mixed in the end-of-class tournaments. In the free-for-all tournaments, we came within the top 3 (by average rank) in the following configurations:
+\begin{itemize}
+  \item 6 enemies, 0 friends
+  \item 6 enemies, 1 friend
+  \item 17 enemies, 0 friends
+\end{itemize}
 
-These tables include t-scores for SimplePlayer compared to all of the players involved. Significance, as used below, refers to significance with a confidence level of 95\% (against a t-score of 2.571).
+In other configurations, we generally came in somewhere in the middle; however, this is not very impressive considering that the dumbest players (including the totally-random ``dumb player'') were active in this tournament.
 
-\begin{figure}[h]
-\centering
-\includegraphics[width=0.8\columnwidth]{single-runs_table}
-\caption[Table of t-score statistics for Single Run Tournaments]{t-score significance of count, energy, and energy density}
-\label{fig:gallery2}
-\end{figure}
+In the best-player tournaments, we came within the top 2 (by average rank) in these configurations:
+\begin{itemize}
+  \item 1 enemy, 0 friends
+  \item 2 enemies, 0 friends
+  \item 2 enemies, 1 friend
+\end{itemize}
 
-We firstly consider the results from the single player tournaments (Figure 1), where each tournament was run with ony one player. From the results, it appears that SimplePlayer did exceptionally well when considering the total energy held on the board. SimplePlayer had a significantly greater amount of energy than any of the other five players in thirteen out of sixteen configurations. For many of these configurations, SimplePlayer also has a significantly greater or greatest energy density (Energy / Count). These successes are most likely due to a movement strategy that favors staying on, moving to, and reproducing to cells with food.
+There were some configurations in which we did relatively poorly, however. Here are those in which we came in last:
+\begin{itemize}
+  \item 5 enemies, 0 friends
+  \item 4 enemies, 1 friend
+  \item 4 enemies, 0 friends
+  \item 3 enemies, 0 friends
+  \item 0 enemies, 2 friends
+\end{itemize}
 
-The one configuration from the single player tournaments that produced a remarkably poor performance from the SimplePlayer is Goldmines. This is due to the abnormally low value of $p$, which makes it very unlikely that a player standing still will ever see food before starving to death. Since it was more common that the SimplePlayer never had food spawn next to it, it most likely went extinct. Normally, the SimplePlayer is naturally optimized for low-$p$ conditions (seeking out food as a movement priority), but Goldmines is just too sparse of a configuration. If $p$ was slightly higher, SimplePlayer may have performed as well as it did in both The Medium Desert and The Easier Desert. Once SimplePlayer successfully managed the starting phase of a low-$p$ configuration, it ended up doing the best out of all six players included.
+There are some interesting patterns here. In free-for-all play, we do best in situations where we have no friends (kind of like real life). This makes sense because we don't take advantage of friends very well; we don't have any code for defending them. Furthermore, having more friends makes our player less agressive, and because of the randomness of a free-for-all this can often result in dying too early.
 
-\pagebreak
+The best-of play is also interesting. We seem to do best in situations with \textit{more neutral players and now friends}, and poorly in situations where we have a lot of enemies or no enemies. Observing a few games, it appears that our strategy of being aggressive in situations with lots of neutral players was quite helpful: it's pretty safe to aggressively target neutral players if they don't have friends. Situations in which targeting neutal players hurts our rank (as Spriha suggested might happen) seem to be fairly rare in these configurations, given that our player was fairly successful.
 
-\begin{figure}[h]
-\centering
-\includegraphics[width=0.8\columnwidth]{best6-runs_table}
-\caption[Table of t-score statistics for Best Six Tournaments]{t-score significance of count, energy, and energy density}
-\label{fig:gallery2}
-\end{figure}
-
-The results from the best six player tournaments (Figure 2) are very different from the single player tournaments. SimplePlayer only did well in several configurations: The Medium Desert, The Easier Desert, Himalayas, Utopian Future, and Americas. The reasoning for the successful performance of SimplePlayer has already been explained above. However, the remaining two configurations are very strange. SimplePlayer performed moderately well on Hot Rainforest, but for Utopian Future it was significantly greater than any other player. The main differences are an increase in $K$ and $u$ and a decrease in $v$. The addition of such mobility, combined with the incredible reward for finding food allowed SimplePlayer to function the best. Himalayas is a larger than default board, with a higher moving cost $v$. One reason that SimplePlayer performed so well is that the movement logic is set to only move when food is available, it is not wasteful with movement. This strategy allowed SimplePlayer to perform significantly greater than every other player on both The Medium Desert and The Easier Desert, as well as the Himalayas.
-
-For the best six player configurations, there were noticeable declines in performance from the single player runs. Many of the configurations ended up being monopolized by one player (normally Group 4's FarmingPlayer), leaving very poor results for the SimplePlayer. However, despite the fact that many organism totals and organism energy levels were lower than the average produced by other organisms, the energy density was still fairly high (significant in some cases like Liechtenstein).
-
-
+In the configurations that we did poorly in, we generally had a lot of enemies and few friends. This was somewhat surprising, because we thought that our aggressive strategy in these situations would help us get some kills before being killed ourselves. However, this does make sense when we consider that many of our enemies would target players that shot them if they survived. Even if they had other enemies, they would attack us in \textit{retalation}, which meant that we would die earlier and therefore have a lower score. Perhaps if we had had time to take enemies and neutral players into account separately, we could have done better in these situations. Nevertheless, it's worth noting that the average ranks in many of these mostly-enemy configurations are within a very small range for all teams (~0.2), implying that our performance was not actually as far below the other teams as the last-place finish implies.
 
 \section{Contributions}
 
 We had two main contributions to the class strategy and discussion:
 \begin{enumerate}
-  \item \textbf{Importance of initial expansion -} We were one of the initial teams to implement a strategy, XOrganism, that demonstrated the lasting benefits of rapid initial yet sustainable reproduction. While were not the only team to arrive at this conclusion, it proved very important to many teams' strategies throughout the class.
-  \item \textbf{Northward tendency -} Our team was the first team to recognize the downward trend in organism movement and implement a strategy to alter our movement with a directional tendency to increase longevity of organism survival.
+  \item \textbf{Expected value and probabilistic play -} Nikhil was the first to try and explore the value of probabilistic play, first with the strategy of Bayesian updating and then with his geometric distribution-based Expected Value Player.
+  \item \textbf{Northward tendency -}
 \end{enumerate}
 
 \section{Future Directions and Limitations}
