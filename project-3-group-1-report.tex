@@ -134,16 +134,27 @@ The initial stage of the Protective Farmer, before farming a food source, is to 
 
 Once it found a satisfactory source food cell it transitioned into a building phase. The Farmer would look at all adjacent tiles and see if any were filled. If more than two were empty, then the farmer reproduces a wall onto one of those cells. This continues until there is only one cell left uncovered, which the Farmer simply moves to (instead of reproducing on to) to become the final wall. This Farmer organism and the newly spawned Farmer players are set to a Protective mode. This means that the organisms will stay still on their own cell unless they need food. If they do, they will attempt to move inwards. Once they replenish their energy, they move back onto the open cell they left earlier. In addition, when they move into the center cell, they also transition back to the building phase to fill any gaps in the wall that may have formed if any other Farmer organisms died off.
 
-\subsection{SimplePlayer}
+\subsection{David's Revenge's Revenge}
 
-The Simple Player strategy was built from a few adjustments to that of XOrganism. We created the Simple Player with the assumption that if we fine tune the basic movement and reproduction, we could survive and flourish in various environments. We made three main adjustments to the previous strategy.
+As the name suggests, David's Revenge's Revenge (DRR for short) was built directly on top of David's Revenge. Determining who to shoot is the exact same as David's Revenge: when DRR shoots, it will shoot the enemy who shot it most in previous rounds. However, unlike David's Revenge, DRR does not shoot whenever it can. It uses a logistic function in order to determine a \textit{shooting percentage}, and then shoots with a probability equal to this function value.
 
-\begin{enumerate}
-  \item \textbf{Northward Movement -} The movement of Simple Player was adjusted from XOrganism to include a northward tendency. We noticed a downward trend in the movement of other teams when searching for food. To counteract and take advantage of the trend, when there is not food surrounding the player and the organism has enough energy to move, a random direction is chosen from the open locations with a higher probability for northward movement.
-  \item \textbf{Increased Reproduction -} We changed our Simple Player strategy to allow for more aggressive reproduction to expand rapidly in the beginning of the game. The early expansion sets up our organism to choke out subsequent teams by utilizing more space and resources. To do so, we increased the probability with which an organism with enough energy to reproduce will reproduce and decreased the minimum energy required to reproduce.
-  \item \textbf{Elimination of the courteous move -} We eliminated the courteous move from the Simple Player strategy. The initial intention of the courteous move was to make sure all of our organisms had an increased chance for survival. However, due to other organisms taking the food our organisms gave up, in environments with multiple other organisms, this did not have the effect we desired.
-\end{enumerate}
+The intuition behind the logistic function is that in situations with lots of friends, it is better to be conservative with shooting. The friends of the enemy you shot are likely to retaliate in subsequent rounds, so a player that is too aggressive in these situations is likely to die. However, in situations with few friends, being aggressive makes more sense because retaliation is unlikely. This applies regardless of the number of actual enemies; it generally pays off to target neutral players as well, as long as there are few friends, because it improves a players' \textit{relative} ranking compared to other players. It was noted by Spriha that this might bring down a players' ranking in certain situations because it would eliminate another player's enemy; however, as we will see in the results section, we actually did quite well in situations where there were many enemies.
 
+Thus we used the ratio of non-friends to players as the independent variable in the logistic function: $x = \dfrac{n - f}{n}$. Then the shooting percentage is calculated as $P = \dfrac{1}{1 + e^{-\frac{x - \mu}{\beta}}}$, where $\beta$ and $\mu$ govern the steepness and the mean of the distribution respectively. Initially, our logistic curve had $\beta=0.07,\mu=0.07$ (see Figure 1). However, we wanted to find the best-performing combination, so we systematically tried different combinations of $\mu$ and $\beta$ to find out which produced the best rank. In the end, we found that $\beta=0.06,\mu=0.4$ (see figure 2) was the best performing. This curve was more aggressive than the original curve; it appears that shooting more often improves performance even at relatively low non-friend to players ratio, reaching 90\% at an x-value of just 60\%.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.8\columnwidth]{old-logistic-curve.png}
+\caption[Initial logistic curve with $\beta=0.07,\mu=0.5$]{Initial Logistic Curve with $\beta=0.07,\mu=0.5$}
+\label{fig:gallery2}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.8\columnwidth]{new-logistic-curve.png}
+\caption[Final logistic curve with $\beta=0.06,\mu=0.4$]{Final logistic curve with $\beta=0.06,\mu=0.4$}
+\label{fig:gallery3}
+\end{figure}
 \section{Implementation}
 
 \subsection{XOrganism}
