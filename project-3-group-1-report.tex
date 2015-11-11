@@ -114,7 +114,10 @@ David's Revenge was our initial attempt where we tried to create a retaliatory p
 
 We initially construct an enmity graph. An enmity graph captures which players seem to be enemies of others. This provided us with more than enough information to design our player's decision making. We only consider any player that targeted us.
 
-Using our enmity graph, we identify players that have targeted us and choose a player to return fire. The choice in player evolved through many designs. Initially it was the most recent player that shot us, but later on it became a weighted selection based on the number of times the player targeted us. We used a bounding "window" to make more recent hits more relevant as opposed to more temporally distant hits. If we had no player target us, we would simply take no action.
+Using our enmity graph, we identify players that have targeted us and choose a player to return fire. The choice in player evolved through many designs. Initially it was the most recent player that shot us, but later on it became a weighted selection based on the number of times the player targeted us. We used a bounding "window" to make more recent hits more relevant as opposed to more temporally distant hits. 
+
+If a player stopped targeting us, as long as they are within our defined time window, we would still target them. If we had no player target us at all in the first place, we would simply take no action.
+
 
 
 \subsection{Protective Farmer}
@@ -149,17 +152,11 @@ Thus we used the ratio of non-friends to players as the independent variable in 
 \end{figure}
 \section{Implementation}
 
-\subsection{XOrganism}
+\subsection{David's Revenge}
 
-The implementation of XOrganism was fairly straightforward, as it only considered its current energy level and known parameter values. The only bit of state that was carried over (in addition to game state, such as current energy level) was the number of turns it had been alive (which was used in order to move every 20th turn to seek out more food). We first defined an \texttt{isSated} function (which just determined whether $Energy_{organism} \geq M - u$). Then, every turn, we did the following:
+David's Revenge took a very simplistic approach in defining its actions. In it's final iteration, it featured a selection of a target (if one existed) based on the most hits against us in a time window. Formally, in a game of $n$ players let $p_{it}$ be the player in position $1\le i<n$ clockwise from our player at round $t$. $p_{it} \in {0,1}$ where it is $0$ if it does not hit us and $1$ if it does. Then at round $t'$, our player will target $argmax_i$ $\{P_i | P_i = \sum_{t'-k}^{t'}p_{it}\}$. Our look-back window in this case is $k$. 
 
-\begin{enumerate}
-  \item If the organism was sated, we would reproduce with a probability of 70\%.
-  \item If the organism did not reproduce, but still had food on its square and was sated, then it would move into an empty adjacent square - a courteous move designed to help other XOrganisms who might need food.
-  \item If there was no food in its square, and the organism was not sated, then it would attempt to move into an adjacent square with food. Usually, if there was no food available, the organism would stay put. But every 20th turn (determined by the age counter), it would make a random move in order to seek out pockets of food that might be just beyond its field of vision.
-\end{enumerate}
-
-This implementation was very simple - only 100 lines of Java code. This is notable because this organism did tend to survive on its own, showing that even very simple heuristics can lead to acceptable results.
+To compute this, we cache all hits from the start of the game by leveraging our enmity graph. We iterate through the past $k$ rounds and count up how many times each player hit us throughout those $k$ rounds. We then select the player with the largest sum and choose to hit that person. Thus if no player targeted us in a round, however within the past few rounds there had been players that targeted us, we would look to target those players. 
 
 \subsection{Protective Farmer}
 The implementation of Protective Farmer was divided up into several different phases. The Farmer uses external state to keep track of which phase of its lifecycle it's in, but this information is only used between players during the building phase.
@@ -237,7 +234,7 @@ Although an organism might not know the size of the board it starts on, we belie
 
 \section{Acknowledgments}
 
-The evolution of our players was heavily based on class discussion and iteration of our original ideas based on in-class runs. Group 2 was particularly helpful, due to its ``Rabbits'' strategy (later renamed to ``Harvey''). Their fast expansion - and the way they efficiently choked out our XOrganism and our first draft of SinglePlayer - convinced us of the need to be less cautious about our reproduction chances if we wanted to compete in high-food environments.
+The idea of an enmity graph is attributed to Group 4 who initially coined the term. Our first implementation leveraged their graph code that was already written and we extended their ideas. We would also like to thank Group 3 for hinting us that using a time window (like short-term memory) might be worth a look. 
 
 \section{Conclusion}
 
