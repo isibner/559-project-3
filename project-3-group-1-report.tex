@@ -114,11 +114,9 @@ David's Revenge was our initial attempt where we tried to create a retaliatory p
 
 We initially construct an enmity graph. An enmity graph captures which players seem to be enemies of others. This provided us with more than enough information to design our player's decision making. We only consider any player that targeted us.
 
-Using our enmity graph, we identify players that have targeted us and choose a player to return fire. The choice in player evolved through many designs. Initially it was the most recent player that shot us, but later on it became a weighted selection based on the number of times the player targeted us. We used a bounding "window" to make more recent hits more relevant as opposed to more temporally distant hits.
+Using our enmity graph, we identify players that have targeted us and choose a player to return fire. The choice in player evolved through many designs. Initially it was the most recent player that shot us, but later on it became a weighted selection based on the number of times the player targeted us. We used a bounding ``window'' to make more recent hits more relevant as opposed to more temporally distant hits.
 
 If a player stopped targeting us, as long as they are within our defined time window, we would still target them. If we had no player target us at all in the first place, we would simply take no action.
-
-
 
 \subsection{Protective Farmer}
 The Protective Farmer was a reaction to the results of the preliminary test run during the first several classes. XOrganism was not faring so well later on in games with other, more aggressive, players, even when it did well in the early stages of the game. As well, due to XOrganism's courteous moves, it would lose valuable coverage of the food-populated cells on the board.
@@ -154,7 +152,7 @@ Thus we used the ratio of non-friends to players as the independent variable in 
 
 \subsection{David's Revenge}
 
-David's Revenge took a very simplistic approach in defining its actions. In it's final iteration, it featured a selection of a target (if one existed) based on the most hits against us in a time window. Formally, in a game of $n$ players let $p_{it}$ be the player in position $1\le i<n$ clockwise from our player at round $t$. $p_{it} \in {0,1}$ where it is $0$ if it does not hit us and $1$ if it does. Then at round $t'$, our player will target $argmax_i$ $\{P_i | P_i = \sum_{t'-k}^{t'}p_{it}\}$. Our look-back window in this case is $k$.
+David's Revenge took a very simplistic approach in defining its actions. In its final iteration, it featured a selection of a target (if one existed) based on the most hits against us in a time window. Formally, in a game of $n$ players let $p_{it}$ be the player in position $1\le i<n$ clockwise from our player at round $t$. $p_{it} \in {0,1}$ where it is $0$ if it does not hit us and $1$ if it does. Then at round $t'$, our player will target $argmax_i$ $\{P_i | P_i = \sum_{t'-k}^{t'}p_{it}\}$. Our look-back window in this case is $k$.
 
 To compute this, we cache all hits from the start of the game by leveraging our enmity graph. We iterate through the past $k$ rounds and count up how many times each player hit us throughout those $k$ rounds. We then select the player with the largest sum and choose to hit that person. Thus if no player targeted us in a round, however within the past few rounds there had been players that targeted us, we would look to target those players.
 
@@ -210,7 +208,7 @@ In the configurations that we did poorly in, we generally had a lot of enemies a
 We had two main contributions to the class strategy and discussion:
 \begin{enumerate}
   \item \textbf{Expected value and probabilistic play -} Nikhil was the first to try and explore the value of probabilistic play, first with the strategy of Bayesian updating and then with his geometric distribution-based Expected Value Player.
-  \item \textbf{Northward tendency -}
+  \item \textbf{Logistic curve -} Ian was the first to have the idea of using a mathematical function to vary the aggression of a player (their likelihood of shooting). This was a novel idea and lead to some good class discussions on the use of other parameters for improving this function.
 \end{enumerate}
 
 \section{Future Directions and Limitations}
