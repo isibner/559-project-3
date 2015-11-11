@@ -98,32 +98,24 @@ Players retain perfect information about who shot whom in previous rounds.
 Immediately, our team observed several key features about the game.
 
 \begin{enumerate}
-  \item The information available to organisms would be very limited. They can only `see' in four directions, and could only detect food (or lack of food) and other organisms' states. So strategies that required non-local knowledge or multi-organism coordination would be difficult to implement.
-  \item Staying put is much cheaper than moving since $v \geq 1$. Also, for the majority of the setups we considered, we had $v \geq 20$. Therefore, an organism should stay put more often than it moves.
-  \item For all setups, we had $q \geq p$. This means that food tended to `collect' in certain squares, rather than being widely distributed on empty squares.
-  \item A player with fewer individual organisms tends to die out faster, due to the random nature of food spawning. So it pays to try and reproduce fairly often.
-  \item Reproducing produces two organisms with half the energy of the original, so the more energy an organism has when it reproduces, the more likely both offspring will survive.
+  \item While players are given a list of allies and enemies, there are more opponents than just those given. Players who we perceive neutrally could target us as an enemy. This lead us to believe that we might consider targeting those players as well to preserve our wellbeing.
+  \item A way to model the state of the game as perceived by our player would be to create a dynamic enmity graph. This would help us keep track of the relationships between all players
+  \item We needed to consider whether or not an aggressive or non-aggressive approach would be better. As a proactive player, targeting our enemies might lead others to target us (if we target their allies and they choose to defend them). On the other hand, taking a retaliatory approach might limit our influence on the game end state.
+  \item Winning the game meant having the highest score. By killing off other players, we would be able to raise our own rank by lowering other players' score.
 \end{enumerate}
 
 These insights guided our strategy throughout and allowed us to focus on the most important aspects of the game.
 
 \section{Strategies and Concepts}
 
-\subsection{XOrganism}
+\subsection{David's Revenge}
 
-XOrganism was our first attempt, so we tried to create an organism that would survive on its own in a variety of conditions. The goal was to have a good survival rate in ``desert'' conditions, where $p \leq 0.005$. We did this in several ways.
+David's Revenge was our initial attempt where we tried to create a retaliatory player. The main idea was to maintain our own player's wellbeing while minimizing involvement if at all possible. The only times that David's Revenge would take action is if an arbitrary player targeted our player. 
 
-First, we defined the idea of an organism being `sated'. In effect, a sated organism is close enough to its maximum energy that it is not in immediate need of food. There are many possible definitions for satiety; we initially defined an organism as sated if $Energy_{organism} \geq M - u$. This was a fairly intuitive definition: an organism is sated if eating one more unit of food would fill it up completely.
+We initially construct an enmity graph. An enmity graph captures which players seem to be enemies of others. This provided us with more than enough information to design our player's decision making. We only consider any player that targeted us.
 
-For movement, we tried to stay put very often because it only cost 1 unit of energy. We only moved under a few conditions:
-\begin{enumerate}
-  \item An adjacent square has food, and the organism is not `sated'. The rationale behind this movement pattern is fairly obvious - organisms tend to survive longer if they seek out food.
-  \item The organism is `sated', but its square still has food. The idea here was to be \textit{courteous}, and allow other organisms who might need that food to jump on it.
-  \item The organism has not found food in 20 turns. In this case, it moves in a random direction to try to look for food it might have missed.
-\end{enumerate}
-For reproduction, our organism was similarly simple. If the player is sated, then there is a 70\% chance of reproducing in a random direction. This ensures that when an organism does reproduce, both offspring have about half of their maximum energy, giving them a better chance of survival.
+Using our enmity graph, we identify players that have targeted us and choose a player to return fire. The choice in player evolved through many designs. Initially it was the most recent player that shot us, but later on it became a weighted selection based on the number of times the player targeted us. We used a bounding "window" to make more recent hits more relevant as opposed to more temporally distant hits. If we had no player target us, we would simply take no action.
 
-This organism tended to do pretty well on its own, surviving in about 30\% of our test runs with $p=0.005$. However, it performed significantly worse than other players in configurations where food was readily available. Worse, it tended to get ``choked out'' by more aggressive players, who would often take advantage of its courteous moves to take the food for themselves and reproduce. So, while it was a fairly good start, we needed to make some changes before XOrganism could be competitive.
 
 \subsection{Protective Farmer}
 The Protective Farmer was a reaction to the results of the preliminary test run during the first several classes. XOrganism was not faring so well later on in games with other, more aggressive, players, even when it did well in the early stages of the game. As well, due to XOrganism's courteous moves, it would lose valuable coverage of the food-populated cells on the board.
